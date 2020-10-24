@@ -39,7 +39,7 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
         array $template_type_parameters = null,
         string $called_fq_classlike_name = null,
         string $called_method_name_lowercase = null
-    ) {
+    ): ?Union {
         if (! in_array($method_name_lowercase, ['of', 'ofmaybe', 'and', 'andmaybe'])) {
             return null;
         }
@@ -121,7 +121,7 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
                 [
                     new Union(
                         [
-                            new Type\Atomic\ObjectLike(
+                            new Type\Atomic\TKeyedArray(
                                 [
                                     $firstArgType->value => $outputType,
                                 ]
@@ -141,7 +141,7 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
         }
 
         $existingArray = $existingType->getAtomicTypes()['array'];
-        if (! ($existingArray instanceof Type\Atomic\ObjectLike)) {
+        if (! ($existingArray instanceof Type\Atomic\TKeyedArray)) {
             return null;
         }
 

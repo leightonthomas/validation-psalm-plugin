@@ -29,7 +29,7 @@
         "weirdan/codeception-psalm-module": "^0.9.1"
     },
     "require": {
-        "vimeo/psalm": "^3.16",
+        "vimeo/psalm": "^4.0",
         "ext-simplexml": "*",
         "leightonthomas/validation": "^0.1.0"
     },
