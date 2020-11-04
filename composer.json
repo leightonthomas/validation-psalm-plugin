@@ -31,7 +31,7 @@
     "require": {
         "vimeo/psalm": "^4.0",
         "ext-simplexml": "*",
-        "leightonthomas/validation": "^0.1.0"
+        "leightonthomas/validation": "^0.2"
     },
     "scripts": {
         "psalm": "vendor/bin/psalm",
