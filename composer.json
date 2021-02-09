@@ -26,12 +26,12 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.4",
-        "weirdan/codeception-psalm-module": "^0.9.1"
+        "weirdan/codeception-psalm-module": "^0.13"
     },
     "require": {
-        "vimeo/psalm": "^4.0",
+        "vimeo/psalm": "^4.4",
         "ext-simplexml": "*",
-        "leightonthomas/validation": "^0.2"
+        "leightonthomas/validation": "^0.3"
     },
     "scripts": {
         "psalm": "vendor/bin/psalm",

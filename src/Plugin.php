@@ -16,10 +16,10 @@ use function class_exists;
 class Plugin implements PluginEntryPointInterface
 {
 
-    public function __invoke(RegistrationInterface $psalm, ?SimpleXMLElement $config = null): void
+    public function __invoke(RegistrationInterface $registration, ?SimpleXMLElement $config = null): void
     {
         // This seems to be required to auto-loaded the class, based on what's in an official Psalm plugin
         class_exists(Rule\Arrays\IsDefinedArrayReturnTypeProvider::class, true);
-        $psalm->registerHooksFromClass(Rule\Arrays\IsDefinedArrayReturnTypeProvider::class);
+        $registration->registerHooksFromClass(Rule\Arrays\IsDefinedArrayReturnTypeProvider::class);
     }
 }
