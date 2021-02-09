@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace LeightonThomas\Validation\Plugin\Rule\Arrays;
 
+use LeightonThomas\Validation\Rule\Arrays\IsArray;
+use LeightonThomas\Validation\Rule\Arrays\IsDefinedArray;
 use Psalm\Plugin\EventHandler\Event\MethodReturnTypeProviderEvent;
 use Psalm\Plugin\EventHandler\MethodReturnTypeProviderInterface;
 use Psalm\Type;
@@ -14,6 +16,9 @@ use function array_flip;
 use function array_key_exists;
 use function array_key_first;
 use function array_keys;
+use function count;
+use function get_class;
+use function gettype;
 use function in_array;
 use function var_dump;
 
@@ -73,27 +78,35 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
             return null;
         }
 
+        $secondArgRuleOutputType = $oRuleOverrides;
         if ($secondArgType instanceof Type\Atomic\TGenericObject) {
-            $oRuleOverrideType = $oRuleOverrides->getTemplateTypes()[0] ?? null;
-            if ($oRuleOverrideType === null) {
-                return null;
-            }
+            // needs special handling because it's like a weird double nested thing
+            if ($secondArgClass->name === IsArray::class) {
+                $secondArgRuleOutputType = new Union(
+                    [
+                        new Type\Atomic\TArray($secondArgType->type_params)
+                    ],
+                );
+            } else {
+                $oRuleOverrideType = $oRuleOverrides->getTemplateTypes()[0] ?? null;
+                if ($oRuleOverrideType === null) {
+                    return null;
+                }
 
-            /** @var int|null $realTypeParameterIndex */
-            $realTypeParameterIndex = array_flip(
+                /** @var int|null $realTypeParameterIndex */
+                $realTypeParameterIndex = array_flip(
                     array_keys($secondArgClass->template_types ?? [])
                 )[$oRuleOverrideType->param_name] ?? null;
 
-            if ($realTypeParameterIndex === null) {
-                return null;
-            }
+                if ($realTypeParameterIndex === null) {
+                    return null;
+                }
 
-            $secondArgRuleOutputType = $secondArgType->type_params[$realTypeParameterIndex] ?? null;
-            if ($secondArgRuleOutputType === null) {
-                return null;
+                $secondArgRuleOutputType = $secondArgType->type_params[$realTypeParameterIndex] ?? null;
+                if ($secondArgRuleOutputType === null) {
+                    return null;
+                }
             }
-        } else {
-            $secondArgRuleOutputType = $oRuleOverrides;
         }
 
         $firstArgType = $firstArgTypes[array_key_first($firstArgTypes)];
