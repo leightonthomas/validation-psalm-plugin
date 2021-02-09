@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace LeightonThomas\Validation\Plugin\Rule\Arrays;
 
-use Psalm\CodeLocation;
-use Psalm\Context;
-use Psalm\Plugin\Hook\MethodReturnTypeProviderInterface;
-use Psalm\StatementsSource;
+use Psalm\Plugin\EventHandler\Event\MethodReturnTypeProviderEvent;
+use Psalm\Plugin\EventHandler\MethodReturnTypeProviderInterface;
 use Psalm\Type;
 use Psalm\Type\Union;
 use Throwable;
@@ -17,6 +15,7 @@ use function array_key_exists;
 use function array_key_first;
 use function array_keys;
 use function in_array;
+use function var_dump;
 
 /**
  * @internal
@@ -29,23 +28,19 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
         return ['LeightonThomas\Validation\Rule\Arrays\IsDefinedArray'];
     }
 
-    public static function getMethodReturnType(
-        StatementsSource $source,
-        string $fq_classlike_name,
-        string $method_name_lowercase,
-        array $call_args,
-        Context $context,
-        CodeLocation $code_location,
-        array $template_type_parameters = null,
-        string $called_fq_classlike_name = null,
-        string $called_method_name_lowercase = null
-    ): ?Union {
-        if (! in_array($method_name_lowercase, ['of', 'ofmaybe', 'and', 'andmaybe'])) {
+    public static function getMethodReturnType(MethodReturnTypeProviderEvent $event): ?Union
+    {
+        $methodNameLower = $event->getMethodNameLowercase();
+        $source = $event->getSource();
+        $callArgs = $event->getCallArgs();
+        $fqClasslikeName = $event->getFqClasslikeName();
+
+        if (! in_array($methodNameLower, ['of', 'ofmaybe', 'and', 'andmaybe'])) {
             return null;
         }
 
-        $firstArgNodeTypes = $source->getNodeTypeProvider()->getType($call_args[0]->value);
-        $secondArgNodeTypes = $source->getNodeTypeProvider()->getType($call_args[1]->value);
+        $firstArgNodeTypes = $source->getNodeTypeProvider()->getType($callArgs[0]->value);
+        $secondArgNodeTypes = $source->getNodeTypeProvider()->getType($callArgs[1]->value);
 
         if ($firstArgNodeTypes === null || $secondArgNodeTypes === null) {
             return null;
@@ -72,8 +67,8 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
         }
 
         $oRuleOverrides = (
-                $secondArgClass->template_type_extends ?? []
-            )['LeightonThomas\Validation\Rule\Rule']["O"] ?? null;
+            $secondArgClass->template_extended_params ?? []
+        )['LeightonThomas\Validation\Rule\Rule']["O"] ?? null;
         if ($oRuleOverrides === null) {
             return null;
         }
@@ -109,15 +104,15 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
             return null;
         }
 
-        if (in_array($method_name_lowercase, ['of', 'ofmaybe'])) {
+        if (in_array($methodNameLower, ['of', 'ofmaybe'])) {
             $outputType = clone $secondArgRuleOutputType;
 
-            if ($method_name_lowercase === 'ofmaybe') {
+            if ($methodNameLower === 'ofmaybe') {
                 $outputType->possibly_undefined = true;
             }
 
             $classLike = new Type\Atomic\TGenericObject(
-                $fq_classlike_name,
+                $fqClasslikeName,
                 [
                     new Union(
                         [
@@ -134,8 +129,7 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
             return new Union([$classLike]);
         }
 
-        /** @var Union|null $existingType */
-        $existingType = $template_type_parameters[0] ?? null;
+        $existingType = $event->getTemplateTypeParameters()[0] ?? null;
         if ($existingType === null) {
             return null;
         }
@@ -146,14 +140,14 @@ class IsDefinedArrayReturnTypeProvider implements MethodReturnTypeProviderInterf
         }
 
         $outputType = clone $secondArgRuleOutputType;
-        if ($method_name_lowercase === 'andmaybe') {
+        if ($methodNameLower === 'andmaybe') {
             $outputType->possibly_undefined = true;
         }
 
         $existingArray->properties[$firstArgType->value] = $outputType;
 
         $classLike = new Type\Atomic\TGenericObject(
-            $fq_classlike_name,
+            $fqClasslikeName,
             [$existingType],
         );
 
