@@ -25,6 +25,7 @@ Feature: IsDefinedArray Rule with the plugin
 
       namespace Tests\LeightonThomas\Validation;
 
+      use LeightonThomas\Validation\Rule\Arrays\IsArray;
       use LeightonThomas\Validation\Rule\Arrays\IsDefinedArray;
       use LeightonThomas\Validation\Rule\Scalar\Strings\IsString;
       use LeightonThomas\Validation\Rule\Scalar\Integer\IsInteger;
@@ -63,7 +64,9 @@ Feature: IsDefinedArray Rule with the plugin
       """
       $rule = IsDefinedArray::of('a', new IsString())
           ->and(4, new IsInteger())
-          ->and('another', Union::of(new IsString())->or(new IsInteger()))
+          ->and('some', Union::of(new IsString())->or(new IsInteger()))
+          ->and('another', IsDefinedArray::of('a', new IsString()))
+          ->and('other', new IsArray(new IsString(), new IsArray(new IsInteger(), new IsBoolean())))
           ->andMaybe('someKey', new IsBoolean())
       ;
 
@@ -71,8 +74,8 @@ Feature: IsDefinedArray Rule with the plugin
       """
     When I run Psalm
     Then I see these errors
-      | Type  | Message                                                                                                                     |
-      | Trace | $rule: LeightonThomas\Validation\Rule\Arrays\IsDefinedArray<array{4: int, a: string, another: int\|string, someKey?: bool}> |
+      | Type  | Message                                                                                                                                                                                     |
+      | Trace | $rule: LeightonThomas\Validation\Rule\Arrays\IsDefinedArray<array{4: int, a: string, another: array{a: string}, other: array<string, array<int, bool>>, some: int\|string, someKey?: bool}> |
     And I see no other errors
 
   Scenario: It will return the correct type even if nested
